@@ -1,0 +1,135 @@
+"use client";
+
+import React from 'react';
+
+import {
+  Home,
+  Search,
+  Bell,
+  Mail,
+  Bookmark,
+  User,
+  MoreHorizontal,
+  Settings,
+  LogOut,
+  CreditCard
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
+
+import { Button } from '../ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import TwitterLogo from '../Twitterlogo';
+import { useAuth } from '@/context/AuthContext';
+import LanguageSelector from '../LanguageSelector';
+import { useTranslation } from 'react-i18next';
+
+interface SidebarProps {
+  currentPage?: string;
+  onNavigate?: (page: string) => void;
+}
+
+export default function Sidebar({ currentPage = 'home', onNavigate }: SidebarProps) {
+  const { user, logout } = useAuth();
+  const { t } = useTranslation();
+
+  const navigation = [
+    { name: t('home'), icon: Home, current: currentPage === 'home', page: 'home' },
+    { name: t('explore'), icon: Search, current: currentPage === 'explore', page: 'explore' },
+    { name: t('notifications'), icon: Bell, current: currentPage === 'notifications', page: 'notifications', badge: true },
+    { name: t('messages'), icon: Mail, current: currentPage === 'messages', page: 'messages' },
+    { name: t('bookmarks'), icon: Bookmark, current: currentPage === 'bookmarks', page: 'bookmarks' },
+    { name: t('profile'), icon: User, current: currentPage === 'profile', page: 'profile' },
+    { name: t('subscription'), icon: CreditCard, current: currentPage === 'subscription', page: 'subscription' },
+    { name: t('more'), icon: MoreHorizontal, current: currentPage === 'more', page: 'more' },
+  ];
+
+  return (
+    <div className="flex flex-col h-screen w-full bg-black">
+      <div className="p-4 flex justify-center md:justify-start">
+        <TwitterLogo size="lg" className="text-white" />
+      </div>
+
+      <nav className="flex-1 px-2">
+        <ul className="space-y-2">
+          {navigation.map((item) => (
+            <li key={item.name}>
+              <Button
+                variant="ghost"
+                className={`w-full justify-center md:justify-start text-xl py-6 px-4 rounded-full hover:bg-gray-900 ${item.current ? 'font-bold' : 'font-normal'
+                  } text-white hover:text-white`}
+                onClick={() => {
+                  if (item.page === 'subscription') {
+                    window.location.href = '/subscription';
+                  } else {
+                    onNavigate?.(item.page);
+                  }
+                }}
+              >
+                <item.icon className="md:mr-4 h-7 w-7" />
+                <span className="hidden md:inline">{item.name}</span>
+                {item.badge && (
+                  <span className="md:ml-2 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    3
+                  </span>
+                )}
+              </Button>
+            </li>
+          ))}
+          <li>
+            <LanguageSelector />
+          </li>
+        </ul>
+
+        <div className="mt-8 px-2">
+          <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-full text-lg">
+             <span className="hidden md:inline">{t('tweet')}</span>
+             <span className="md:hidden">+</span>
+          </Button>
+        </div>
+      </nav>
+
+      {user && (
+        <div className="p-4 border-t border-gray-800">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="w-full justify-center md:justify-start p-3 rounded-full hover:bg-gray-900"
+              >
+                <Avatar className="h-10 w-10 md:mr-3">
+                  <AvatarImage src={user.avatar} alt={user.displayName} />
+                  <AvatarFallback>{user.displayName[0]}</AvatarFallback>
+                </Avatar>
+                <div className="hidden md:block flex-1 text-left">
+                  <div className="text-white font-semibold">{user.displayName}</div>
+                  <div className="text-gray-400 text-sm">@{user.username}</div>
+                </div>
+                <MoreHorizontal className="hidden md:block h-5 w-5 text-gray-400" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 bg-black border-gray-800">
+              <DropdownMenuItem className="text-white hover:bg-gray-900">
+                <Settings className="mr-2 h-4 w-4" />
+                {t('settings')}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-gray-800" />
+              <DropdownMenuItem
+                className="text-white hover:bg-gray-900"
+                onClick={logout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                {t('logout')} @{user.username}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -90,21 +90,45 @@ app.get("/", (req, res) => {
 
 const port = process.env.PORT || 5000;
 const url = process.env.MONGODB_URL;
+let cachedDb = null;
 
-if (!url) {
-  console.error("❌ MONGODB_URL is not defined in environment variables");
+async function connectToDatabase() {
+  if (cachedDb && mongoose.connection.readyState === 1) {
+    return cachedDb;
+  }
+
+  if (!url) {
+    console.error("❌ MONGODB_URL is not defined");
+    throw new Error("MONGODB_URL missing");
+  }
+
+  // Set global mongoose options
+  mongoose.set('bufferCommands', false);
+
+  console.log("🔄 Connecting to MongoDB...");
+  try {
+    const db = await mongoose.connect(url, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    cachedDb = db;
+    console.log("✅ Connected to MongoDB");
+    return db;
+  } catch (err) {
+    console.error("❌ MongoDB connection error:", err.message);
+    throw err;
+  }
 }
 
-mongoose
-  .connect(url, {
-    serverSelectionTimeoutMS: 5000, // Fail fast if can't connect
-  })
-  .then(() => {
-    console.log("✅ Connected to MongoDB");
-  })
-  .catch((err) => {
-    console.error("❌ MongoDB connection error:", err.message);
-  });
+// Middleware to ensure DB is connected
+app.use(async (req, res, next) => {
+  try {
+    await connectToDatabase();
+    next();
+  } catch (err) {
+    res.status(500).send({ error: "Database connection failed", details: err.message });
+  }
+});
 
 if (process.env.NODE_ENV !== "production") {
   app.listen(port, () => {

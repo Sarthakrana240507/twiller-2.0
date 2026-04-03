@@ -91,19 +91,26 @@ app.get("/", (req, res) => {
 const port = process.env.PORT || 5000;
 const url = process.env.MONGODB_URL;
 
+if (!url) {
+  console.error("❌ MONGODB_URL is not defined in environment variables");
+}
+
 mongoose
-  .connect(url)
+  .connect(url, {
+    serverSelectionTimeoutMS: 5000, // Fail fast if can't connect
+  })
   .then(() => {
     console.log("✅ Connected to MongoDB");
-    if (process.env.NODE_ENV !== "production") {
-      app.listen(port, () => {
-        console.log(`🚀 Server running on port ${port}`);
-      });
-    }
   })
   .catch((err) => {
     console.error("❌ MongoDB connection error:", err.message);
   });
+
+if (process.env.NODE_ENV !== "production") {
+  app.listen(port, () => {
+    console.log(`🚀 Server running on port ${port}`);
+  });
+}
 
 //Register
 //Register

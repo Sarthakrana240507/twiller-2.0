@@ -95,9 +95,11 @@ mongoose
   .connect(url)
   .then(() => {
     console.log("✅ Connected to MongoDB");
-    app.listen(port, () => {
-      console.log(`🚀 Server running on port ${port}`);
-    });
+    if (process.env.NODE_ENV !== "production") {
+      app.listen(port, () => {
+        console.log(`🚀 Server running on port ${port}`);
+      });
+    }
   })
   .catch((err) => {
     console.error("❌ MongoDB connection error:", err.message);
@@ -611,3 +613,5 @@ app.post("/verify-payment", async (req, res) => {
     res.status(500).send({ error: error.message });
   }
 });
+
+export default app;

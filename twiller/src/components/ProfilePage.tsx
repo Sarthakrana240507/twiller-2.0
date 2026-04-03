@@ -106,9 +106,9 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("posts");
   const [showEditModal, setShowEditModal] = useState(false);
 
-  if (!user) return null;
   const [tweets, setTweets] = useState<any>([]);
   const [loading, setloading] = useState(false);
+
   const fetchTweets = async () => {
     try {
       setloading(true);
@@ -120,9 +120,14 @@ export default function ProfilePage() {
       setloading(false);
     }
   };
+
   useEffect(() => {
-    fetchTweets();
-  }, []);
+    if (user) {
+      fetchTweets();
+    }
+  }, [user]);
+
+  if (!user) return null;
   // Filter tweets by current user
   const userTweets = tweets.filter((tweet: any) => tweet.author._id === user._id);
 
